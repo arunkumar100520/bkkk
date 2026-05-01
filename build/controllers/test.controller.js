@@ -8,7 +8,7 @@ const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
 const test_model_1 = __importDefault(require("../models/test.model"));
 const certificate_model_1 = __importDefault(require("../models/certificate.model"));
-const uuid_1 = require("uuid");
+const crypto_1 = require("crypto");
 const pdfkit_1 = __importDefault(require("pdfkit"));
 // Upload or update test for a course (Admin)
 exports.createOrUpdateTest = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
@@ -48,7 +48,7 @@ exports.submitTest = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
             score: 0,
             passed: false,
             isCancelled: true,
-            uniqueId: (0, uuid_1.v4)(),
+            uniqueId: (0, crypto_1.randomUUID)(),
             companyName: "QualtSpire",
         });
         return res
@@ -71,7 +71,7 @@ exports.submitTest = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
         score,
         passed,
         isCancelled: false,
-        uniqueId: (0, uuid_1.v4)(),
+        uniqueId: (0, crypto_1.randomUUID)(),
         companyName: "QualtSpire",
     });
     res.status(200).json({ success: true, score, passed, certificate });

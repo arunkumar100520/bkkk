@@ -4,7 +4,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import TestModel from "../models/test.model";
 import CertificateModel from "../models/certificate.model";
 import CourseModel from "../models/course.model";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import PDFDocument from "pdfkit";
 
 // Upload or update test for a course (Admin)
@@ -56,7 +56,7 @@ export const submitTest = CatchAsyncError(
         score: 0,
         passed: false,
         isCancelled: true,
-        uniqueId: uuidv4(),
+        uniqueId: randomUUID(),
         companyName: "QualtSpire",
       });
       return res
@@ -82,7 +82,7 @@ export const submitTest = CatchAsyncError(
       score,
       passed,
       isCancelled: false,
-      uniqueId: uuidv4(),
+      uniqueId: randomUUID(),
       companyName: "QualtSpire",
     });
 
