@@ -24,7 +24,7 @@ app.use(cookieParser());
 // origin: process.env.ORIGIN,
 app.use(
     cors({
-        origin: ['https://qualtspire.vercel.app', 'http://localhost:3000'],
+        origin: ['https://qualtspire.vercel.app', 'https://qualtspire-blond.vercel.app', 'http://localhost:3000'],
         credentials: true,
     })
 );
