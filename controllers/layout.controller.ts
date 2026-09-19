@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import ErrorHandler from "../utils/ErrorHandler";
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
 import LayoutModel from "../models/layout.model";
-import cloudinary from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 
 // create layout
 export const createLayout = CatchAsyncError(
@@ -15,7 +15,7 @@ export const createLayout = CatchAsyncError(
       }
       if (type === "Banner") {
         const { image, title, subTitle } = req.body;
-        const myCloud = await cloudinary.v2.uploader.upload(image, {
+        const myCloud = await cloudinary.uploader.upload(image, {
           folder: "layout",
         });
         const banner = {
@@ -80,7 +80,7 @@ export const editLayout = CatchAsyncError(
 
         const data = image.startsWith("https")
           ? bannerData
-          : await cloudinary.v2.uploader.upload(image, {
+          : await cloudinary.uploader.upload(image, {
               folder: "layout",
             });
 

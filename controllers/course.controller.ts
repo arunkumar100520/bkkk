@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
-import cloudinary from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 import { createCourse, getAllCoursesService } from "../services/course.service";
 import CourseModel, { IComment } from "../models/course.model";
 import { redis } from "../utils/redis";
@@ -19,7 +19,7 @@ export const uploadCourse = CatchAsyncError(
       const data = req.body;
       const thumbnail = data.thumbnail;
       if (thumbnail) {
-        const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
+        const myCloud = await cloudinary.uploader.upload(thumbnail, {
           folder: "courses",
         });
 
@@ -48,9 +48,9 @@ export const editCourse = CatchAsyncError(
       const courseData = await CourseModel.findById(courseId) as any;
 
       if (thumbnail && !thumbnail.startsWith("https")) {
-        await cloudinary.v2.uploader.destroy(courseData.thumbnail.public_id);
+        await cloudinary.uploader.destroy(courseData.thumbnail.public_id);
 
-        const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
+        const myCloud = await cloudinary.uploader.upload(thumbnail, {
           folder: "courses",
         });
 

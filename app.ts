@@ -11,6 +11,7 @@ import notificationRouter from "./routes/notification.route";
 import analyticsRouter from "./routes/analytics.route";
 import layoutRouter from "./routes/layout.route";
 import testRouter from "./routes/test.route";
+import driveRouter from "./routes/drive.route";
 import { rateLimit } from 'express-rate-limit'
 
 // body parser
@@ -46,7 +47,8 @@ app.use(
     notificationRouter,
     analyticsRouter,
     layoutRouter,
-    testRouter
+    testRouter,
+    driveRouter
 );
 
 // testing api
