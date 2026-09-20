@@ -30,6 +30,7 @@ exports.uploadCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, 
             };
         }
         (0, course_service_1.createCourse)(data, res, next);
+        await redis_1.redis.del("allCourses"); // invalidate courses list cache
     }
     catch (error) {
         return next(new ErrorHandler_1.default(error.message, 500));
@@ -62,6 +63,7 @@ exports.editCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
             $set: data,
         }, { new: true });
         await redis_1.redis.set(courseId, JSON.stringify(course)); // update course in redis
+        await redis_1.redis.del("allCourses"); // invalidate list cache
         res.status(201).json({
             success: true,
             course,
@@ -99,7 +101,17 @@ exports.getSingleCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, re
 // get all courses --- without purchasing
 exports.getAllCourses = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
+        // Serve from Redis cache if available (fast path)
+        const cachedCourses = await redis_1.redis.get("allCourses");
+        if (cachedCourses) {
+            return res.status(200).json({
+                success: true,
+                courses: JSON.parse(cachedCourses),
+            });
+        }
+        // Cache miss — fetch from MongoDB and cache for 15 minutes
         const courses = await course_model_1.default.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+        await redis_1.redis.set("allCourses", JSON.stringify(courses), "EX", 900); // 15 min
         res.status(200).json({
             success: true,
             courses,
