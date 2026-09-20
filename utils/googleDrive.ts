@@ -51,7 +51,7 @@ export const uploadFileToDrive = async (
   fileName: string,
   mimeType: string
 ): Promise<UploadResult> => {
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  let folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
   if (!process.env.GOOGLE_DRIVE_CLIENT_EMAIL || !process.env.GOOGLE_DRIVE_PRIVATE_KEY) {
     throw new Error(
@@ -64,6 +64,14 @@ export const uploadFileToDrive = async (
     throw new Error(
       "GOOGLE_DRIVE_FOLDER_ID is not set in environment variables."
     );
+  }
+
+  // Extract ID if a full URL was provided
+  if (folderId.includes("drive.google.com")) {
+    const match = folderId.match(/folders\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      folderId = match[1];
+    }
   }
 
   const drive = getDriveClient();
