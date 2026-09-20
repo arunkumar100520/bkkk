@@ -5,8 +5,6 @@ import https from "https";
 
 // -------------------------------------------------------
 // Fix: Force IPv4 DNS on Windows (avoids wsarecv IPv6 timeout)
-// When IPv6 is enabled but Google's IPv6 routes fail, Node
-// will try the IPv4 address instead.
 // -------------------------------------------------------
 dns.setDefaultResultOrder("ipv4first");
 
@@ -21,21 +19,29 @@ const httpsAgent = new https.Agent({
 google.options({ agent: httpsAgent } as any);
 
 // -------------------------------------------------------
-// Initialise Google Drive client with Service Account JWT
+// Initialise Google Drive client with OAuth2 refresh token
+// (Files upload into the admin's own Google Drive account)
 // -------------------------------------------------------
 const getDriveClient = () => {
-  const privateKey = (process.env.GOOGLE_DRIVE_PRIVATE_KEY || "").replace(
-    /\\n/g,
-    "\n"
-  );
+  const clientId     = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
 
-  const auth = new google.auth.JWT({
-    email: process.env.GOOGLE_DRIVE_CLIENT_EMAIL,
-    key: privateKey,
-    scopes: ["https://www.googleapis.com/auth/drive"],
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error(
+      "Google OAuth2 credentials are missing. " +
+      "Set GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and " +
+      "GOOGLE_OAUTH_REFRESH_TOKEN in your environment variables."
+    );
+  }
+
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+
+  oauth2Client.setCredentials({
+    refresh_token: refreshToken,
   });
 
-  return google.drive({ version: "v3", auth });
+  return google.drive({ version: "v3", auth: oauth2Client });
 };
 
 // -------------------------------------------------------
@@ -53,20 +59,13 @@ export const uploadFileToDrive = async (
 ): Promise<UploadResult> => {
   let folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-  if (!process.env.GOOGLE_DRIVE_CLIENT_EMAIL || !process.env.GOOGLE_DRIVE_PRIVATE_KEY) {
-    throw new Error(
-      "Google Drive service account credentials are not set in environment variables. " +
-      "Set GOOGLE_DRIVE_CLIENT_EMAIL and GOOGLE_DRIVE_PRIVATE_KEY in your .env file."
-    );
-  }
-
   if (!folderId) {
     throw new Error(
       "GOOGLE_DRIVE_FOLDER_ID is not set in environment variables."
     );
   }
 
-  // Extract ID if a full URL was provided
+  // Extract ID if a full Google Drive URL was pasted instead of just the ID
   if (folderId.includes("drive.google.com")) {
     const match = folderId.match(/folders\/([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
@@ -90,7 +89,7 @@ export const uploadFileToDrive = async (
       body: readable,
     },
     fields: "id, name",
-    supportsAllDrives: true,  // required for Shared Drives
+    supportsAllDrives: true,
   });
 
   const fileId = uploadResponse.data.id;
@@ -103,7 +102,7 @@ export const uploadFileToDrive = async (
   // Make the file publicly readable so the embed player can stream it
   await drive.permissions.create({
     fileId,
-    supportsAllDrives: true,  // required for Shared Drives
+    supportsAllDrives: true,
     requestBody: {
       role: "reader",
       type: "anyone",
