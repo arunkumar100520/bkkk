@@ -15,7 +15,7 @@ const sendMail_1 = __importDefault(require("../utils/sendMail"));
 const jwt_1 = require("../utils/jwt");
 const redis_1 = require("../utils/redis");
 const user_service_1 = require("../services/user.service");
-const cloudinary_1 = __importDefault(require("cloudinary"));
+const cloudinary_1 = require("cloudinary");
 exports.registrationUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
@@ -237,8 +237,8 @@ exports.updateProfilePicture = (0, catchAsyncErrors_1.CatchAsyncError)(async (re
             // if user have one avatar then call this if
             if (user?.avatar?.public_id) {
                 // first delete the old image
-                await cloudinary_1.default.v2.uploader.destroy(user?.avatar?.public_id);
-                const myCloud = await cloudinary_1.default.v2.uploader.upload(avatar, {
+                await cloudinary_1.v2.uploader.destroy(user?.avatar?.public_id);
+                const myCloud = await cloudinary_1.v2.uploader.upload(avatar, {
                     folder: "avatars",
                     width: 150,
                 });
@@ -248,7 +248,7 @@ exports.updateProfilePicture = (0, catchAsyncErrors_1.CatchAsyncError)(async (re
                 };
             }
             else {
-                const myCloud = await cloudinary_1.default.v2.uploader.upload(avatar, {
+                const myCloud = await cloudinary_1.v2.uploader.upload(avatar, {
                     folder: "avatars",
                     width: 150,
                 });

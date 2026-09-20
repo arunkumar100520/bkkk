@@ -7,7 +7,7 @@ exports.getLayoutByType = exports.editLayout = exports.createLayout = void 0;
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
 const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
 const layout_model_1 = __importDefault(require("../models/layout.model"));
-const cloudinary_1 = __importDefault(require("cloudinary"));
+const cloudinary_1 = require("cloudinary");
 // create layout
 exports.createLayout = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
@@ -18,7 +18,7 @@ exports.createLayout = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, 
         }
         if (type === "Banner") {
             const { image, title, subTitle } = req.body;
-            const myCloud = await cloudinary_1.default.v2.uploader.upload(image, {
+            const myCloud = await cloudinary_1.v2.uploader.upload(image, {
                 folder: "layout",
             });
             const banner = {
@@ -74,7 +74,7 @@ exports.editLayout = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
             const { image, title, subTitle } = req.body;
             const data = image.startsWith("https")
                 ? bannerData
-                : await cloudinary_1.default.v2.uploader.upload(image, {
+                : await cloudinary_1.v2.uploader.upload(image, {
                     folder: "layout",
                 });
             const banner = {

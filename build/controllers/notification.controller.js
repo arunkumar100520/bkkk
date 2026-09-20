@@ -49,7 +49,8 @@ exports.updateNotification = (0, catchAsyncErrors_1.CatchAsyncError)(async (req,
     }
 });
 // delete notification --- only admin
-node_cron_1.default.schedule("0 0 0 * * *", async () => {
+// node-cron v4 uses 5-field standard cron: "0 0 * * *" = midnight every day
+node_cron_1.default.schedule("0 0 * * *", async () => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     await notification_Model_1.default.deleteMany({ status: "read", createdAt: { $lt: thirtyDaysAgo } });
     console.log('Deleted read notifications');

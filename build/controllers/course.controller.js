@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateVideoUrl = exports.deleteCourse = exports.getAdminAllCourses = exports.addReplyToReview = exports.addReview = exports.addAnwser = exports.addQuestion = exports.getCourseByUser = exports.getAllCourses = exports.getSingleCourse = exports.editCourse = exports.uploadCourse = void 0;
 const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
-const cloudinary_1 = __importDefault(require("cloudinary"));
+const cloudinary_1 = require("cloudinary");
 const course_service_1 = require("../services/course.service");
 const course_model_1 = __importDefault(require("../models/course.model"));
 const redis_1 = require("../utils/redis");
@@ -21,7 +21,7 @@ exports.uploadCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, 
         const data = req.body;
         const thumbnail = data.thumbnail;
         if (thumbnail) {
-            const myCloud = await cloudinary_1.default.v2.uploader.upload(thumbnail, {
+            const myCloud = await cloudinary_1.v2.uploader.upload(thumbnail, {
                 folder: "courses",
             });
             data.thumbnail = {
@@ -43,8 +43,8 @@ exports.editCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
         const courseId = req.params.id;
         const courseData = await course_model_1.default.findById(courseId);
         if (thumbnail && !thumbnail.startsWith("https")) {
-            await cloudinary_1.default.v2.uploader.destroy(courseData.thumbnail.public_id);
-            const myCloud = await cloudinary_1.default.v2.uploader.upload(thumbnail, {
+            await cloudinary_1.v2.uploader.destroy(courseData.thumbnail.public_id);
+            const myCloud = await cloudinary_1.v2.uploader.upload(thumbnail, {
                 folder: "courses",
             });
             data.thumbnail = {
