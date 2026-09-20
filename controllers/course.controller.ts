@@ -93,6 +93,10 @@ export const getSingleCourse = CatchAsyncError(
     try {
       const courseId = req.params.id;
 
+      if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        return next(new ErrorHandler("Invalid course ID", 400));
+      }
+
       const isCacheExist = await redis.get(courseId);
 
       if (isCacheExist) {

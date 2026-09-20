@@ -77,6 +77,9 @@ exports.editCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
 exports.getSingleCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
         const courseId = req.params.id;
+        if (!mongoose_1.default.Types.ObjectId.isValid(courseId)) {
+            return next(new ErrorHandler_1.default("Invalid course ID", 400));
+        }
         const isCacheExist = await redis_1.redis.get(courseId);
         if (isCacheExist) {
             const course = JSON.parse(isCacheExist);
