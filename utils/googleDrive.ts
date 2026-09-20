@@ -90,6 +90,7 @@ export const uploadFileToDrive = async (
       body: readable,
     },
     fields: "id, name",
+    supportsAllDrives: true,  // required for Shared Drives
   });
 
   const fileId = uploadResponse.data.id;
@@ -102,6 +103,7 @@ export const uploadFileToDrive = async (
   // Make the file publicly readable so the embed player can stream it
   await drive.permissions.create({
     fileId,
+    supportsAllDrives: true,  // required for Shared Drives
     requestBody: {
       role: "reader",
       type: "anyone",

@@ -64,6 +64,7 @@ const uploadFileToDrive = async (buffer, fileName, mimeType) => {
             body: readable,
         },
         fields: "id, name",
+        supportsAllDrives: true, // required for Shared Drives
     });
     const fileId = uploadResponse.data.id;
     const uploadedName = uploadResponse.data.name;
@@ -73,6 +74,7 @@ const uploadFileToDrive = async (buffer, fileName, mimeType) => {
     // Make the file publicly readable so the embed player can stream it
     await drive.permissions.create({
         fileId,
+        supportsAllDrives: true,
         requestBody: {
             role: "reader",
             type: "anyone",
