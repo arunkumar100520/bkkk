@@ -14,6 +14,7 @@ import {
   updateUserRole,
 } from "../controllers/user.controller";
 import { authorizeRoles, isAutheticated } from "../middleware/auth";
+import { forgotPassword, verifyPasswordResetOtp, resetPassword } from "../controllers/passwordReset.controller";
 const userRouter = express.Router();
 
 userRouter.post("/registration", registrationUser);
@@ -21,6 +22,10 @@ userRouter.post("/registration", registrationUser);
 userRouter.post("/activate-user", activateUser);
 
 userRouter.post("/login", loginUser);
+
+userRouter.post("/forgot-password", forgotPassword);
+userRouter.post("/verify-reset-otp", verifyPasswordResetOtp);
+userRouter.post("/reset-password", resetPassword);
 
 userRouter.get("/logout",isAutheticated, logoutUser);
 

@@ -15,6 +15,15 @@ export interface IUser extends Document {
   };
   role: string;
   isVerified: boolean;
+  tokenVersion: number;
+  passwordReset?: {
+    requestIdHash: string;
+    otpHash?: string;
+    resetTokenHash?: string;
+    attempts: number;
+    expiresAt: Date;
+    stage: "otp" | "verified";
+  };
   courses: Array<{ courseId: string }>;
   comparePassword: (password: string) => Promise<boolean>;
   SignAccessToken: () => string;
@@ -55,6 +64,18 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    tokenVersion: { type: Number, default: 0 },
+    passwordReset: {
+      type: new Schema({
+        requestIdHash: String,
+        otpHash: String,
+        resetTokenHash: String,
+        attempts: { type: Number, default: 0 },
+        expiresAt: Date,
+        stage: { type: String, enum: ["otp", "verified"] },
+      }, { _id: false }),
+      select: false,
+    },
     courses: [
       {
         courseId: String,
@@ -64,10 +85,12 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
   { timestamps: true }
 );
 
+userSchema.index({ "passwordReset.requestIdHash": 1 }, { sparse: true });
+
 // Hash Password before saving
 userSchema.pre<IUser>("save", async function (next) {
   if (!this.isModified("password")) {
-    next();
+    return next();
   }
   this.password = await bcrypt.hash(this.password, 10);
   next();
@@ -75,14 +98,14 @@ userSchema.pre<IUser>("save", async function (next) {
 
 // sign access token
 userSchema.methods.SignAccessToken = function () {
-  return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "", {
+  return jwt.sign({ id: this._id, tokenVersion: this.tokenVersion || 0 }, process.env.ACCESS_TOKEN || "", {
     expiresIn: "5m",
   });
 };
 
 // sign refresh token
 userSchema.methods.SignRefreshToken = function () {
-  return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || "", {
+  return jwt.sign({ id: this._id, tokenVersion: this.tokenVersion || 0 }, process.env.REFRESH_TOKEN || "", {
     expiresIn: "3d",
   });
 };

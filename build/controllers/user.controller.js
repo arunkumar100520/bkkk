@@ -139,10 +139,15 @@ exports.updateAccessToken = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, 
             return next(new ErrorHandler_1.default("Please login for access this resources!", 400));
         }
         const user = JSON.parse(session);
-        const accessToken = jsonwebtoken_1.default.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
+        const currentUser = await user_model_1.default.findById(user._id).select("tokenVersion");
+        if (!currentUser || (decoded.tokenVersion || 0) !== (currentUser.tokenVersion || 0)) {
+            return next(new ErrorHandler_1.default("Your password has changed. Please log in again", 401));
+        }
+        user.tokenVersion = currentUser.tokenVersion || 0;
+        const accessToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, process.env.ACCESS_TOKEN, {
             expiresIn: "5m",
         });
-        const refreshToken = jsonwebtoken_1.default.sign({ id: user._id }, process.env.REFRESH_TOKEN, {
+        const refreshToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, process.env.REFRESH_TOKEN, {
             expiresIn: "3d",
         });
         req.user = user;

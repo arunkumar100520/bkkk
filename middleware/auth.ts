@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { redis } from "../utils/redis";
 import { updateAccessToken } from "../controllers/user.controller";
+import userModel from "../models/user.model";
 
 // authenticated user
 export const isAutheticated = CatchAsyncError(
@@ -16,7 +17,10 @@ export const isAutheticated = CatchAsyncError(
       );
     }
 
-    const decoded = jwt.decode(access_token) as JwtPayload;
+    // Verify the signature even when the access token has expired and needs refresh.
+    const decoded = jwt.verify(access_token, process.env.ACCESS_TOKEN as string, {
+      algorithms: ["HS256"], ignoreExpiration: true,
+    }) as JwtPayload;
 
     if (!decoded) {
       return next(new ErrorHandler("access token is not valid", 400));
@@ -38,6 +42,10 @@ export const isAutheticated = CatchAsyncError(
         );
       }
 
+      const currentUser = await userModel.findById(decoded.id).select("tokenVersion");
+      if (!currentUser || (decoded.tokenVersion || 0) !== (currentUser.tokenVersion || 0)) {
+        return next(new ErrorHandler("Your password has changed. Please log in again", 401));
+      }
       req.user = JSON.parse(user);
 
       next();

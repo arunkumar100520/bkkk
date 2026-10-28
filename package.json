@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "start": "node build/server.js",
-    "build": "tsc"
+    "build": "tsc && node scripts/copy-mail-templates.cjs",
+    "test": "node --test tests/*.test.cjs"
   },
   "author": "EC & SPM Project",
   "license": "ISC",

@@ -9,13 +9,17 @@ const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const redis_1 = require("../utils/redis");
 const user_controller_1 = require("../controllers/user.controller");
+const user_model_1 = __importDefault(require("../models/user.model"));
 // authenticated user
 exports.isAutheticated = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     const access_token = req.cookies.access_token;
     if (!access_token) {
         return next(new ErrorHandler_1.default("Please login to access this resource", 400));
     }
-    const decoded = jsonwebtoken_1.default.decode(access_token);
+    // Verify the signature even when the access token has expired and needs refresh.
+    const decoded = jsonwebtoken_1.default.verify(access_token, process.env.ACCESS_TOKEN, {
+        algorithms: ["HS256"], ignoreExpiration: true,
+    });
     if (!decoded) {
         return next(new ErrorHandler_1.default("access token is not valid", 400));
     }
@@ -32,6 +36,10 @@ exports.isAutheticated = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res
         const user = await redis_1.redis.get(decoded.id);
         if (!user) {
             return next(new ErrorHandler_1.default("Please login to access this resource", 400));
+        }
+        const currentUser = await user_model_1.default.findById(decoded.id).select("tokenVersion");
+        if (!currentUser || (decoded.tokenVersion || 0) !== (currentUser.tokenVersion || 0)) {
+            return next(new ErrorHandler_1.default("Your password has changed. Please log in again", 401));
         }
         req.user = JSON.parse(user);
         next();

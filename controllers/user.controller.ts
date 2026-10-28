@@ -216,8 +216,14 @@ export const updateAccessToken = CatchAsyncError(
       
       const user = JSON.parse(session);
 
+      const currentUser = await userModel.findById(user._id).select("tokenVersion");
+      if (!currentUser || (decoded.tokenVersion || 0) !== (currentUser.tokenVersion || 0)) {
+        return next(new ErrorHandler("Your password has changed. Please log in again", 401));
+      }
+      user.tokenVersion = currentUser.tokenVersion || 0;
+
       const accessToken = jwt.sign(
-        { id: user._id },
+        { id: user._id, tokenVersion: user.tokenVersion },
         process.env.ACCESS_TOKEN as string,
         {
           expiresIn: "5m",
@@ -225,7 +231,7 @@ export const updateAccessToken = CatchAsyncError(
       );
 
       const refreshToken = jwt.sign(
-        { id: user._id },
+        { id: user._id, tokenVersion: user.tokenVersion },
         process.env.REFRESH_TOKEN as string,
         {
           expiresIn: "3d",

@@ -1,6 +1,10 @@
 require("dotenv").config();
 import express, { NextFunction, Request, Response } from "express";
 export const app = express();
+// Set to 1 on Render when exactly one trusted proxy sits in front of Express.
+// Keep disabled for servers exposed directly to the internet.
+const proxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
+if (Number.isInteger(proxyHops) && proxyHops > 0) app.set("trust proxy", proxyHops);
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ErrorMiddleware } from "./middleware/error";
