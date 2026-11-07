@@ -16,10 +16,8 @@ import analyticsRouter from "./routes/analytics.route";
 import layoutRouter from "./routes/layout.route";
 import testRouter from "./routes/test.route";
 import driveRouter from "./routes/drive.route";
+import { cashfreeWebhook } from "./controllers/order.controller";
 import { rateLimit } from 'express-rate-limit'
-
-// body parser
-app.use(express.json({ limit: "50mb" }));
 
 // cookie parser
 app.use(cookieParser());
@@ -28,11 +26,36 @@ app.use(cookieParser());
 // origin: process.env.ORIGIN,
 app.use(
     cors({
-        origin: ['https://qualtspire.vercel.app', 'https://qualtspire-blond.vercel.app', 'http://localhost:3000'],
+        origin: (origin, callback) => {
+            const configuredOrigins = (process.env.ORIGIN || "")
+                .split(",")
+                .map((value) => {
+                    try { return new URL(value.trim()).origin; } catch { return ""; }
+                })
+                .filter(Boolean);
+            const allowedOrigins = [
+                'https://qualtspire.vercel.app',
+                'https://qualtspire-blond.vercel.app',
+                'http://localhost:3000',
+                ...configuredOrigins,
+            ];
+            if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+            return callback(new Error("Origin is not allowed by CORS"));
+        },
         credentials: true,
     })
 );
 // app.use(cors({ origin: process.env.ORIGIN, credentials: true, }))
+
+// Cashfree signs the exact request bytes, so this route must use a raw body parser.
+app.post(
+    "/api/v1/payment/cashfree/webhook",
+    express.raw({ type: "application/json", limit: "1mb" }),
+    cashfreeWebhook
+);
+
+// body parser
+app.use(express.json({ limit: "50mb" }));
 
 // api requests limit
 const limiter = rateLimit({
@@ -41,6 +64,8 @@ const limiter = rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
 })
+
+app.use(limiter);
 
 // routes
 app.use(
@@ -71,5 +96,4 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
 });
 
 // middleware calls
-app.use(limiter);
 app.use(ErrorMiddleware);

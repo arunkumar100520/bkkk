@@ -1,14 +1,12 @@
 import express from "express";
 import { authorizeRoles, isAutheticated } from "../middleware/auth";
 import {
-  createOrder,
   getAllOrders,
+  enrollFreeCourse,
   newPayment,
-  sendStripePublishableKey,
+  verifyCashfreePayment,
 } from "../controllers/order.controller";
 const orderRouter = express.Router();
-
-orderRouter.post("/create-order", isAutheticated, createOrder);
 
 orderRouter.get(
   "/get-orders",
@@ -17,8 +15,8 @@ orderRouter.get(
   getAllOrders
 );
 
-orderRouter.get("/payment/stripepublishablekey", sendStripePublishableKey);
-
 orderRouter.post("/payment", isAutheticated, newPayment);
+orderRouter.post("/payment/verify", isAutheticated, verifyCashfreePayment);
+orderRouter.post("/free-course-enrollment", isAutheticated, enrollFreeCourse);
 
 export default orderRouter;

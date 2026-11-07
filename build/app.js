@@ -23,18 +23,42 @@ const analytics_route_1 = __importDefault(require("./routes/analytics.route"));
 const layout_route_1 = __importDefault(require("./routes/layout.route"));
 const test_route_1 = __importDefault(require("./routes/test.route"));
 const drive_route_1 = __importDefault(require("./routes/drive.route"));
+const order_controller_1 = require("./controllers/order.controller");
 const express_rate_limit_1 = require("express-rate-limit");
-// body parser
-exports.app.use(express_1.default.json({ limit: "50mb" }));
 // cookie parser
 exports.app.use((0, cookie_parser_1.default)());
 // cors => cross origin resource sharing
 // origin: process.env.ORIGIN,
 exports.app.use((0, cors_1.default)({
-    origin: ['https://qualtspire.vercel.app', 'https://qualtspire-blond.vercel.app', 'http://localhost:3000'],
+    origin: (origin, callback) => {
+        const configuredOrigins = (process.env.ORIGIN || "")
+            .split(",")
+            .map((value) => {
+            try {
+                return new URL(value.trim()).origin;
+            }
+            catch {
+                return "";
+            }
+        })
+            .filter(Boolean);
+        const allowedOrigins = [
+            'https://qualtspire.vercel.app',
+            'https://qualtspire-blond.vercel.app',
+            'http://localhost:3000',
+            ...configuredOrigins,
+        ];
+        if (!origin || allowedOrigins.includes(origin))
+            return callback(null, true);
+        return callback(new Error("Origin is not allowed by CORS"));
+    },
     credentials: true,
 }));
 // app.use(cors({ origin: process.env.ORIGIN, credentials: true, }))
+// Cashfree signs the exact request bytes, so this route must use a raw body parser.
+exports.app.post("/api/v1/payment/cashfree/webhook", express_1.default.raw({ type: "application/json", limit: "1mb" }), order_controller_1.cashfreeWebhook);
+// body parser
+exports.app.use(express_1.default.json({ limit: "50mb" }));
 // api requests limit
 const limiter = (0, express_rate_limit_1.rateLimit)({
     windowMs: 15 * 60 * 1000,
@@ -42,6 +66,7 @@ const limiter = (0, express_rate_limit_1.rateLimit)({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
 });
+exports.app.use(limiter);
 // routes
 exports.app.use("/api/v1", user_route_1.default, order_route_1.default, course_route_1.default, notification_route_1.default, analytics_route_1.default, layout_route_1.default, test_route_1.default, drive_route_1.default);
 // testing api
@@ -58,5 +83,4 @@ exports.app.all("*", (req, res, next) => {
     next(err);
 });
 // middleware calls
-exports.app.use(limiter);
 exports.app.use(error_1.ErrorMiddleware);
